@@ -18,12 +18,8 @@ import java.util.*;
 public class ChunkProviderTC
 {
     private Random rnd;
-    private NoiseGeneratorOctaves o;
-    private NoiseGeneratorOctaves p;
-    private NoiseGeneratorOctaves q;
-    private NoiseGeneratorOctaves r;
-    private NoiseGeneratorOctaves a;
-    private NoiseGeneratorOctaves b;
+    private NoiseGeneratorOctaves a,b,o,p,q,r;
+    private NoiseGeneratorOctaves volgen1, volgen2; // added by feep
     private double[] u;
     private double[] v = new double[256];
 
@@ -33,6 +29,7 @@ public class ChunkProviderTC
     double[] j;
     double[] k;
     float[] l;
+    double[] volfac1, volfac2; // added by feep
 
     private static int ChunkMaxX = 16;
     private static int ChunkMaxZ = 16;
@@ -75,6 +72,10 @@ public class ChunkProviderTC
 
         this.a = new NoiseGeneratorOctaves(this.rnd, 10);
         this.b = new NoiseGeneratorOctaves(this.rnd, 16);
+        
+        // added by feep
+        this.volgen1 = new NoiseGeneratorOctaves(this.rnd, 4);
+        this.volgen2 = new NoiseGeneratorOctaves(this.rnd, 4);
 
 
         this.CaveGen = new CavesGen(this.worldSettings, this.localWorld);
@@ -273,7 +274,17 @@ public class ChunkProviderTC
         return dryBlock > 250;
     }
 
-
+    private static double fluff(double d) {
+      // System.out.println("----");
+      // System.out.println(d);
+      d = d / 4.5;
+      double old_d = d;
+      d = Math.pow(Math.abs(d), 1.1);
+      if (old_d < 0) d = -d;
+      d = d * 4.5;
+      // System.out.print(d);
+      return d;
+    }
     private double[] GenerateTerrainNoise(double[] paramArrayOfDouble, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6)
     {
         if (paramArrayOfDouble == null)
@@ -292,6 +303,10 @@ public class ChunkProviderTC
         this.g = this.q.a(this.g, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, paramInt6, d1 / 80.0D, d2 / 160.0D, d1 / 80.0D);
         this.h = this.o.a(this.h, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, paramInt6, d1, d2, d1);
         this.i = this.p.a(this.i, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, paramInt6, d1, d2, d1);
+        // added by feep
+        double fac = 1 / 6000.0D;
+        this.volfac1 = this.volgen1.a(this.volfac1, paramInt1, paramInt3, paramInt4, paramInt6, fac, fac);
+        this.volfac2 = this.volgen2.a(this.volfac2, paramInt1, paramInt3, paramInt4, paramInt6, fac, fac);
 
         int i3 = 0;
         int i4 = 0;
@@ -312,14 +327,22 @@ public class ChunkProviderTC
                     d3 /= 2.0D;
                     if (d3 < -1.0D)
                         d3 = -1.0D;
-                    d3 -= this.worldSettings.maxAverageDepth;
+                    // changed by feep
+                    if (this.worldSettings.feepmode)
+                      d3 -= this.worldSettings.maxAverageDepth + fluff(this.volfac1[i4]);
+                    else
+                      d3 -= this.worldSettings.maxAverageDepth;
                     d3 /= 1.4D;
                     d3 /= 2.0D;
                 } else
                 {
                     if (d3 > 1.0D)
                         d3 = 1.0D;
-                    d3 += this.worldSettings.maxAverageHeight;
+                    // changed by feep
+                    if (this.worldSettings.feepmode)
+                      d3 += this.worldSettings.maxAverageHeight + fluff(this.volfac2[i4]);
+                    else
+                      d3 += this.worldSettings.maxAverageHeight;
                     d3 /= 8.0D;
                 }
 
@@ -334,38 +357,38 @@ public class ChunkProviderTC
 
                 for (int i10 = 0; i10 < paramInt5; i10++)
                 {
-                    double d7;
+                    double res;
 
                     double d8 = (i10 - biomeFactor2) * 12.0D * 128.0D / this.height / biomeFactor;
 
                     if (d8 < 0.0D)
                         d8 *= 4.0D;
+                    
+                    double low = this.h[i3] / 512.0D * this.worldSettings.getVolatility1();
+                    double high = this.i[i3] / 512.0D * this.worldSettings.getVolatility2();
 
-                    double d9 = this.h[i3] / 512.0D * this.worldSettings.getVolatility1();
-                    double d10 = this.i[i3] / 512.0D * this.worldSettings.getVolatility2();
-
-                    double d11 = (this.g[i3] / 10.0D + 1.0D) / 2.0D;
-                    if (d11 < this.worldSettings.getVolatilityWeight1())
-                        d7 = d9;
-                    else if (d11 > this.worldSettings.getVolatilityWeight2())
-                        d7 = d10;
+                    double factor = (this.g[i3] / 10.0D + 1.0D) / 2.0D;
+                    if (factor < this.worldSettings.getVolatilityWeight1())
+                        res = low;
+                    else if (factor > this.worldSettings.getVolatilityWeight2())
+                        res = high;
                     else
-                        d7 = d9 + (d10 - d9) * d11;
+                        res = low + (high - low) * factor;
 
                     if (!this.worldSettings.disableNotchHeightControl)
                     {
-                        d7 -= d8;
+                        res -= d8;
 
                         if (i10 > paramInt5 - 4)
                         {
                             double d12 = (i10 - (paramInt5 - 4)) / 3.0F;
-                            d7 = d7 * (1.0D - d12) + -10.0D * d12;
+                            res = res * (1.0D - d12) + -10.0D * d12;
                         }
 
                     }
-                    d7 += this.worldSettings.heightMatrix[i10];
+                    res += this.worldSettings.heightMatrix[i10];
 
-                    paramArrayOfDouble[i3] = d7;
+                    paramArrayOfDouble[i3] = res;
                     i3++;
                 }
             }

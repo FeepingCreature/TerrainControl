@@ -161,6 +161,8 @@ public class WorldConfig extends ConfigFile
 
 
     public int WorldHeight;
+    
+    public boolean feepmode = false;
 
     public WorldConfig(File settingsDir, LocalWorld world, boolean checkOnly)
     {
@@ -420,6 +422,7 @@ public class WorldConfig extends ConfigFile
         this.objectSpawnRatio = this.ReadModSettings(TCDefaultValues.objectSpawnRatio.name(), TCDefaultValues.objectSpawnRatio.intValue());
         this.denyObjectsUnderFill = this.ReadModSettings(TCDefaultValues.DenyObjectsUnderFill.name(), TCDefaultValues.DenyObjectsUnderFill.booleanValue());
         this.customTreeChance = this.ReadModSettings(TCDefaultValues.customTreeChance.name(), TCDefaultValues.customTreeChance.intValue());
+        this.feepmode = ReadModSettings("feepmode", false);
 
         this.ReadHeightSettings();
 
