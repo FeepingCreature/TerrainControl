@@ -10,6 +10,7 @@ import com.Khorn.TerrainControl.Generator.TerrainsGens.TerrainGenBase;
 import com.Khorn.TerrainControl.LocalWorld;
 import com.Khorn.TerrainControl.Util.MathHelper;
 import com.Khorn.TerrainControl.Util.NoiseGeneratorOctaves;
+import com.Khorn.TerrainControl.Configuration.BiomeConfig;
 
 import java.util.*;
 
@@ -306,8 +307,8 @@ public class ChunkProviderTC
         this.i = this.p.Noise3D(this.i, paramInt1, paramInt2, paramInt3, max_X, max_Y, max_Z, d1, d2, d1);
         // added by feep
         double fac = 1 / 6000.0D;
-        this.volfac1 = this.volgen1.a(this.volfac1, paramInt1, paramInt3, max_X, max_Z, fac, fac);
-        this.volfac2 = this.volgen2.a(this.volfac2, paramInt1, paramInt3, max_X, max_Z, fac, fac);
+        this.volfac1 = this.volgen1.Noise2D(this.volfac1, paramInt1, paramInt3, max_X, max_Z, fac, fac);
+        this.volfac2 = this.volgen2.Noise2D(this.volfac2, paramInt1, paramInt3, max_X, max_Z, fac, fac);
 
         int i3D = 0;
         int i2D = 0;
@@ -318,6 +319,7 @@ public class ChunkProviderTC
             {
 
                 int biomeId = this.BiomeArray[(x + 2 + (z + 2) * (max_X + 5))];
+                BiomeConfig localConfig = this.worldSettings.biomeConfigs[biomeId];
 
                 double d3 = this.k[i2D] / 8000.0D;
                 if (d3 < 0.0D)
@@ -331,9 +333,9 @@ public class ChunkProviderTC
                         d3 = -1.0D;
                     // changed by feep
                     if (this.worldSettings.feepmode)
-                      d3 -= this.worldSettings.biomeConfigs[biomeId].maxAverageDepth + fluff(this.volfac1[i4]);
+                      d3 -= localConfig.maxAverageDepth + fluff(this.volfac1[i2D]);
                     else
-                      d3 -= this.worldSettings.biomeConfigs[biomeId].maxAverageDepth;
+                      d3 -= localConfig.maxAverageDepth;
                     d3 /= 1.4D;
                     d3 /= 2.0D;
                 } else
@@ -342,9 +344,9 @@ public class ChunkProviderTC
                         d3 = 1.0D;
                     // changed by feep
                     if (this.worldSettings.feepmode)
-                      d3 += this.worldSettings.biomeConfigs[biomeId].maxAverageHeight + fluff(this.volfac2[i4]);
+                      d3 += localConfig.maxAverageHeight + fluff(this.volfac2[i2D]);
                     else
-                      d3 += this.worldSettings.biomeConfigs[biomeId].maxAverageHeight;
+                      d3 += localConfig.maxAverageHeight;
                     d3 /= 8.0D;
                 }
 
@@ -366,30 +368,30 @@ public class ChunkProviderTC
                     if (d8 > 0.0D)
                         d8 *= 4.0D;
                     
-                    double low = this.h[i3] / 512.0D * this.worldSettings.biomeConfigs[biomeId].volatility1;
-                    double high = this.i[i3] / 512.0D * this.worldSettings.biomeConfigs[biomeId].volatility2;
+                    double low = this.h[i3D] / 512.0D * localConfig.volatility1;
+                    double high = this.i[i3D] / 512.0D * localConfig.volatility2;
 
-                    double factor = (this.g[i3] / 10.0D + 1.0D) / 2.0D;
-                    if (factor < this.worldSettings.biomeConfigs[biomeId].volatilityWeight1)
+                    double factor = (this.g[i3D] / 10.0D + 1.0D) / 2.0D;
+                    if (factor < localConfig.volatilityWeight1)
                         res = low;
-                    else if (factor > this.worldSettings.biomeConfigs[biomeId].volatilityWeight2)
+                    else if (factor > localConfig.volatilityWeight2)
                         res = high;
                     else
                         res = low + (high - low) * factor;
 
-                    if (!this.worldSettings.biomeConfigs[biomeId].disableNotchHeightControl)
+                    if (!localConfig.disableNotchHeightControl)
                     {
                         // res -= d8;
                         res += d8;
 
                         if (y > max_Y - 4)
                         {
-                            double d12 = (i10 - (max_Y - 4)) / 3.0F;
+                            double d12 = (y - (max_Y - 4)) / 3.0F;
                             res = res * (1.0D - d12) + -10.0D * d12;
                         }
 
                     }
-                    res += this.worldSettings.biomeConfigs[biomeId].heightMatrix[y];
+                    res += localConfig.heightMatrix[y];
 
                     outArray[i3D] = res;
                     i3D++;

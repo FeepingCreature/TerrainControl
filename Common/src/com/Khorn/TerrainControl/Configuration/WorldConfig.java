@@ -418,6 +418,7 @@ public class WorldConfig extends ConfigFile
         this.denyObjectsUnderFill = this.ReadModSettings(TCDefaultValues.DenyObjectsUnderFill.name(), TCDefaultValues.DenyObjectsUnderFill.booleanValue());
         this.customTreeChance = this.ReadModSettings(TCDefaultValues.customTreeChance.name(), TCDefaultValues.customTreeChance.intValue());
         this.feepmode = ReadModSettings("feepmode", false);
+        if (this.feepmode) System.out.println("Feep mode on");
 
 
     }
@@ -607,6 +608,7 @@ public class WorldConfig extends ConfigFile
         WriteNewLine();
         WriteComment("Chance to grow custom instead normal tree from sapling .");
         this.WriteValue(TCDefaultValues.customTreeChance.name(), this.customTreeChance);
+        WriteValue("feepmode", this.feepmode);
 
 
         WriteTitle("Cave Variables");
