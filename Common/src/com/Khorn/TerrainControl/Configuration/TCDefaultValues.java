@@ -16,9 +16,9 @@ public enum TCDefaultValues
 
     CustomHeightControl("0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0"),
     CustomBiomes(""),
-    NormalBiomes("Desert,Forest,Extreme Hills,Swampland,Plains,Taiga"),
+    NormalBiomes("Desert,Forest,Extreme Hills,Swampland,Plains,Taiga,Jungle"),
     IceBiomes("Ice Plains"),
-    IsleBiomes("MushroomIsland,Ice Mountains,DesertHills,ForestHills,TaigaHills,River"),
+    IsleBiomes("MushroomIsland,Ice Mountains,DesertHills,ForestHills,TaigaHills,River,JungleHills"),
     BorderBiomes("MushroomIslandShore,Beach,Extreme Hills Edge"),
 
     ModeTerrain("Normal"),
@@ -88,6 +88,7 @@ public enum TCDefaultValues
     FlatBedrock(false),
     BedrockobBlock(7),
     disableNotchPonds(false),
+    WorldHeightBits(7),
 
 
     WorldFog("0xC0D8FF"),
@@ -123,7 +124,10 @@ public enum TCDefaultValues
     dungeonRarity(100),
     dungeonFrequency(8),
     dungeonMinAltitude(0),
-    dungeonMaxAltitude(128),
+
+    vinesRarity(100),
+    vinesFrequency(50),
+    vinesMinAltitude(64),
 
     DisableBiomeHeight(false),
 

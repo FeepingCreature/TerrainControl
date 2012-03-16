@@ -9,6 +9,7 @@ public enum TreeType
     SwampTree,
     Taiga1,
     Taiga2,
+    JungleTree,
+    GroundBush,
     ;
-    // TODO: Are types missing here since 1.2?
 }

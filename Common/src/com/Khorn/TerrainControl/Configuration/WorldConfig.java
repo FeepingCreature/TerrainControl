@@ -110,14 +110,10 @@ public class WorldConfig extends ConfigFile
     public int waterLevelMin;
     public int waterBlock;
     public int iceBlock;
-    public double maxAverageHeight;
-    public double maxAverageDepth;
+
     private double fractureHorizontal;
     private double fractureVertical;
-    private double volatility1;
-    private double volatility2;
-    private double volatilityWeight1;
-    private double volatilityWeight2;
+
     private boolean disableBedrock;
     private boolean flatBedrock;
     public boolean ceilingBedrock;
@@ -127,8 +123,7 @@ public class WorldConfig extends ConfigFile
     public boolean removeSurfaceStone;
 
 
-    public boolean disableNotchHeightControl;
-    public double[] heightMatrix;
+
 
 
     public boolean customObjects;
@@ -159,6 +154,8 @@ public class WorldConfig extends ConfigFile
     public int normalBiomesRarity;
     public int iceBiomesRarity;
 
+    public int worldHeightBits;
+
 
     public int WorldHeight;
     
@@ -168,9 +165,6 @@ public class WorldConfig extends ConfigFile
     {
         this.SettingsDir = settingsDir;
         this.WorldName = world.getName();
-        this.WorldHeight = world.getHeight();
-        this.waterLevelMax = world.getWaterLevel();
-        this.heightMatrix = new double[this.WorldHeight / 8 + 1];
 
         File settingsFile = new File(this.SettingsDir, TCDefaultValues.WorldSettingsName.stringValue());
 
@@ -181,6 +175,7 @@ public class WorldConfig extends ConfigFile
         this.CorrectSettings();
 
         this.WriteSettingsFile(settingsFile);
+        world.setHeightBits(this.worldHeightBits);
 
 
         File BiomeFolder = new File(SettingsDir, TCDefaultValues.WorldBiomeConfigDirectoryName.stringValue());
@@ -193,7 +188,7 @@ public class WorldConfig extends ConfigFile
             }
         }
 
-        ArrayList<LocalBiome> biomes = world.getDefaultBiomes();
+        ArrayList<LocalBiome> biomes = new ArrayList<LocalBiome>(world.getDefaultBiomes());
 
         for (String biomeName : this.CustomBiomes)
         {
@@ -207,7 +202,9 @@ public class WorldConfig extends ConfigFile
 
         for (LocalBiome localBiome : biomes)
         {
-            BiomeConfig config = new BiomeConfig(BiomeFolder, localBiome, this, checkOnly);
+            BiomeConfig config = new BiomeConfig(BiomeFolder, localBiome, this);
+            if(checkOnly)
+                continue;
 
             if (this.NormalBiomes.contains(config.Name))
                 this.normalBiomesRarity += config.BiomeRarity;
@@ -216,7 +213,7 @@ public class WorldConfig extends ConfigFile
 
             this.biomeConfigs[localBiome.getId()] = config;
             if (!this.BiomeConfigsHaveReplacement)
-                this.BiomeConfigsHaveReplacement = config.replaceBlocks.size() > 0;
+                this.BiomeConfigsHaveReplacement = config.ReplaceCount > 0;
 
         }
 
@@ -284,8 +281,8 @@ public class WorldConfig extends ConfigFile
         this.canyonDepth = CheckValue(this.canyonDepth, 0.1D, 15D);
 
 
-        this.waterLevelMin = CheckValue(this.waterLevelMin, 0, WorldHeight);
-        this.waterLevelMax = CheckValue(this.waterLevelMax, 0, WorldHeight, this.waterLevelMin);
+        this.waterLevelMin = CheckValue(this.waterLevelMin, 0, WorldHeight - 1);
+        this.waterLevelMax = CheckValue(this.waterLevelMax, 0, WorldHeight - 1, this.waterLevelMin);
 
         this.customTreeChance = CheckValue(this.customTreeChance, 0, 100);
 
@@ -317,6 +314,11 @@ public class WorldConfig extends ConfigFile
         {
             this.ModeBiome = BiomeMode.Normal;
         }
+        this.worldHeightBits = ReadModSettings(TCDefaultValues.WorldHeightBits.name(), TCDefaultValues.WorldHeightBits.intValue());
+        this.worldHeightBits = CheckValue(this.worldHeightBits, 5, 8);
+
+        this.WorldHeight = 1 << worldHeightBits;
+        this.waterLevelMax = WorldHeight / 2;
 
 
         this.oldBiomeSize = ReadModSettings(TCDefaultValues.oldBiomeSize.name(), TCDefaultValues.oldBiomeSize.doubleValue());
@@ -389,7 +391,7 @@ public class WorldConfig extends ConfigFile
 
         this.canyonRarity = ReadModSettings(TCDefaultValues.canyonRarity.name(), TCDefaultValues.canyonRarity.intValue());
         this.canyonMinAltitude = ReadModSettings(TCDefaultValues.canyonMinAltitude.name(), TCDefaultValues.canyonMinAltitude.intValue());
-        this.canyonMaxAltitude = ReadModSettings(TCDefaultValues.canyonMaxAltitude.name(), this.WorldHeight/2);
+        this.canyonMaxAltitude = ReadModSettings(TCDefaultValues.canyonMaxAltitude.name(), this.WorldHeight / 2);
         this.canyonMinLength = ReadModSettings(TCDefaultValues.canyonMinLength.name(), TCDefaultValues.canyonMinLength.intValue());
         this.canyonMaxLength = ReadModSettings(TCDefaultValues.canyonMaxLength.name(), TCDefaultValues.canyonMaxLength.intValue());
         this.canyonDepth = ReadModSettings(TCDefaultValues.canyonDepth.name(), TCDefaultValues.canyonDepth.doubleValue());
@@ -399,15 +401,8 @@ public class WorldConfig extends ConfigFile
         this.waterLevelMin = ReadModSettings(TCDefaultValues.WaterLevelMin.name(), TCDefaultValues.WaterLevelMin.intValue());
         this.waterBlock = ReadModSettings(TCDefaultValues.WaterBlock.name(), TCDefaultValues.WaterBlock.intValue());
         this.iceBlock = ReadModSettings(TCDefaultValues.IceBlock.name(), TCDefaultValues.IceBlock.intValue());
-        this.maxAverageHeight = ReadModSettings(TCDefaultValues.MaxAverageHeight.name(), TCDefaultValues.MaxAverageHeight.doubleValue());
-        this.maxAverageDepth = ReadModSettings(TCDefaultValues.MaxAverageDepth.name(), TCDefaultValues.MaxAverageDepth.doubleValue());
         this.fractureHorizontal = ReadModSettings(TCDefaultValues.FractureHorizontal.name(), TCDefaultValues.FractureHorizontal.doubleValue());
         this.fractureVertical = ReadModSettings(TCDefaultValues.FractureVertical.name(), TCDefaultValues.FractureVertical.doubleValue());
-        this.volatility1 = ReadModSettings(TCDefaultValues.Volatility1.name(), TCDefaultValues.Volatility1.doubleValue());
-        this.volatility2 = ReadModSettings(TCDefaultValues.Volatility2.name(), TCDefaultValues.Volatility2.doubleValue());
-        this.volatilityWeight1 = ReadModSettings(TCDefaultValues.VolatilityWeight1.name(), TCDefaultValues.VolatilityWeight1.doubleValue());
-        this.volatilityWeight2 = ReadModSettings(TCDefaultValues.VolatilityWeight2.name(), TCDefaultValues.VolatilityWeight2.doubleValue());
-        this.disableNotchHeightControl = ReadModSettings(TCDefaultValues.DisableBiomeHeight.name(), TCDefaultValues.DisableBiomeHeight.booleanValue());
 
         this.disableBedrock = ReadModSettings(TCDefaultValues.DisableBedrock.name(), TCDefaultValues.DisableBedrock.booleanValue());
         this.ceilingBedrock = ReadModSettings(TCDefaultValues.CeilingBedrock.name(), TCDefaultValues.CeilingBedrock.booleanValue());
@@ -423,27 +418,6 @@ public class WorldConfig extends ConfigFile
         this.denyObjectsUnderFill = this.ReadModSettings(TCDefaultValues.DenyObjectsUnderFill.name(), TCDefaultValues.DenyObjectsUnderFill.booleanValue());
         this.customTreeChance = this.ReadModSettings(TCDefaultValues.customTreeChance.name(), TCDefaultValues.customTreeChance.intValue());
         this.feepmode = ReadModSettings("feepmode", false);
-
-        this.ReadHeightSettings();
-
-    }
-
-
-    private void ReadHeightSettings()
-    {
-
-        ArrayList<String> keys = this.ReadModSettings(TCDefaultValues.CustomHeightControl.name(), TCDefaultValues.CustomHeightControl.StringArrayListValue());
-        try
-        {
-            if (keys.size() != (this.WorldHeight / 8 + 1))
-                return;
-            for (int i = 0; i < this.WorldHeight / 8 + 1; i++)
-                this.heightMatrix[i] = Double.valueOf(keys.get(i));
-
-        } catch (NumberFormatException e)
-        {
-            System.out.println("Wrong height settings: '" + this.SettingsCache.get(TCDefaultValues.CustomHeightControl.name()) + "'");
-        }
 
 
     }
@@ -556,6 +530,11 @@ public class WorldConfig extends ConfigFile
 
 
         WriteTitle("Terrain Generator Variables");
+        WriteComment("Height bits determinate generation height. Min 5, max 8");
+        WriteComment("For example 7 = 128 height, 8 = 256 height");
+        WriteValue(TCDefaultValues.WorldHeightBits.name(), this.worldHeightBits);
+        WriteNewLine();
+
         WriteComment("Set water level. Every empty block under this level will be fill water or another block from WaterBlock ");
         WriteValue(TCDefaultValues.WaterLevelMax.name(), this.waterLevelMax);
         WriteValue(TCDefaultValues.WaterLevelMin.name(), this.waterLevelMin);
@@ -565,15 +544,6 @@ public class WorldConfig extends ConfigFile
         WriteNewLine();
         WriteComment("BlockId used as ice");
         WriteValue(TCDefaultValues.IceBlock.name(), this.iceBlock);
-        WriteNewLine();
-        WriteComment("If this value is greater than 0, then it will affect how much, on average, the terrain will rise before leveling off when it begins to increase in elevation.");
-        WriteComment("If the value is less than 0, then it will cause the terrain to either increase to a lower height before leveling out or decrease in height if the value is a large enough negative.");
-        WriteValue(TCDefaultValues.MaxAverageHeight.name(), this.maxAverageHeight);
-
-        WriteNewLine();
-        WriteComment("If this value is greater than 0, then it will affect how much, on average, the terrain (usually at the ottom of the ocean) will fall before leveling off when it begins to decrease in elevation. ");
-        WriteComment("If the value is less than 0, then it will cause the terrain to either fall to a lesser depth before leveling out or increase in height if the value is a large enough negative.");
-        WriteValue(TCDefaultValues.MaxAverageDepth.name(), this.maxAverageDepth);
 
         WriteNewLine();
         WriteComment("Can increase (values greater than 0) or decrease (values less than 0) how much the landscape is fractured horizontally.");
@@ -584,27 +554,6 @@ public class WorldConfig extends ConfigFile
         WriteComment("Positive values will lead to large cliffs/overhangs, floating islands, and/or a cavern world depending on other settings.");
         WriteValue(TCDefaultValues.FractureVertical.name(), this.fractureVertical);
 
-        WriteNewLine();
-        WriteComment("Another type of noise. This noise is independent from biomes. The larger the values the more chaotic/volatile landscape generation becomes.");
-        WriteComment("Setting the values to negative will have the opposite effect and make landscape generation calmer/gentler.");
-        WriteValue(TCDefaultValues.Volatility1.name(), this.volatility1);
-        WriteValue(TCDefaultValues.Volatility2.name(), this.volatility2);
-
-        WriteNewLine();
-        WriteComment("Adjust the weight of the corresponding volatility settings. This allows you to change how prevalent you want either of the volatility settings to be in the terrain.");
-        WriteValue(TCDefaultValues.VolatilityWeight1.name(), this.volatilityWeight1);
-        WriteValue(TCDefaultValues.VolatilityWeight2.name(), this.volatilityWeight2);
-
-        WriteNewLine();
-        WriteComment("Disable all noises except Volatility1 and Volatility2. Also disable default block chance from height.");
-        WriteValue(TCDefaultValues.DisableBiomeHeight.name(), this.disableNotchHeightControl);
-        WriteNewLine();
-        WriteComment("List of custom height factor, 17 double entries, each entire control of about 7 blocks height from down. Positive entry - better chance of spawn blocks, negative - smaller");
-        WriteComment("Values which affect your configuration may be found only experimental. That may be very big, like ~3000.0 depends from height");
-        WriteComment("Example:");
-        WriteComment("  CustomHeightControl:0.0,-2500.0,0.0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0");
-        WriteComment("Make empty layer above bedrock layer. ");
-        WriteHeightSettings();
 
         WriteNewLine();
         WriteComment("Attempts to replace all surface stone with biome surface block");
@@ -694,15 +643,6 @@ public class WorldConfig extends ConfigFile
     }
 
 
-    private void WriteHeightSettings() throws IOException
-    {
-
-        String output = Double.toString(this.heightMatrix[0]);
-        for (int i = 1; i < this.heightMatrix.length; i++)
-            output = output + "," + Double.toString(this.heightMatrix[i]);
-
-        this.WriteValue(TCDefaultValues.CustomHeightControl.name(), output);
-    }
 
 
     private void RegisterBOBPlugins()
@@ -789,25 +729,6 @@ public class WorldConfig extends ConfigFile
         return this.fractureVertical < 0.0D ? 1.0D / (Math.abs(this.fractureVertical) + 1.0D) : this.fractureVertical + 1.0D;
     }
 
-    public double getVolatility1()
-    {
-        return this.volatility1 < 0.0D ? 1.0D / (Math.abs(this.volatility1) + 1.0D) : this.volatility1 + 1.0D;
-    }
-
-    public double getVolatility2()
-    {
-        return this.volatility2 < 0.0D ? 1.0D / (Math.abs(this.volatility2) + 1.0D) : this.volatility2 + 1.0D;
-    }
-
-    public double getVolatilityWeight1()
-    {
-        return (this.volatilityWeight1 - 0.5D) * 24.0D;
-    }
-
-    public double getVolatilityWeight2()
-    {
-        return (0.5D - this.volatilityWeight2) * 24.0D;
-    }
 
     public boolean createAdminium(int y)
     {
