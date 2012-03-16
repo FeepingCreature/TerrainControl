@@ -306,7 +306,7 @@ public class ChunkProviderTC
         this.h = this.o.Noise3D(this.h, paramInt1, paramInt2, paramInt3, max_X, max_Y, max_Z, d1, d2, d1);
         this.i = this.p.Noise3D(this.i, paramInt1, paramInt2, paramInt3, max_X, max_Y, max_Z, d1, d2, d1);
         // added by feep
-        double fac = 1 / 6000.0D;
+        double fac = 1 / 15000.0D;
         this.volfac1 = this.volgen1.Noise2D(this.volfac1, paramInt1, paramInt3, max_X, max_Z, fac, fac);
         this.volfac2 = this.volgen2.Noise2D(this.volfac2, paramInt1, paramInt3, max_X, max_Z, fac, fac);
 
